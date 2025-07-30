@@ -1,15 +1,33 @@
 
+import { db } from '../db';
+import { usersTable } from '../db/schema';
 import { type LoginInput, type User } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function loginUser(input: LoginInput): Promise<User | null> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is authenticating a user by email and password,
-    // verifying the password hash, and returning the user data if valid.
-    return Promise.resolve({
-        id: 1,
-        email: input.email,
-        password_hash: 'hashed_password',
-        company_name: 'Placeholder Company',
-        created_at: new Date()
-    } as User);
-}
+export const loginUser = async (input: LoginInput): Promise<User | null> => {
+  try {
+    // Find user by email
+    const users = await db.select()
+      .from(usersTable)
+      .where(eq(usersTable.email, input.email))
+      .execute();
+
+    if (users.length === 0) {
+      return null;
+    }
+
+    const user = users[0];
+
+    // Verify password hash - using Bun's built-in password verification
+    const isValidPassword = await Bun.password.verify(input.password, user.password_hash);
+
+    if (!isValidPassword) {
+      return null;
+    }
+
+    return user;
+  } catch (error) {
+    console.error('Login failed:', error);
+    throw error;
+  }
+};

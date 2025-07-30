@@ -1,9 +1,19 @@
 
+import { db } from '../db';
+import { jobPostsTable } from '../db/schema';
 import { type JobPost } from '../schema';
+import { desc } from 'drizzle-orm';
 
 export async function getJobPosts(): Promise<JobPost[]> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching all job posts from the database
-    // for display on the landing page, ordered by creation date (newest first).
-    return Promise.resolve([]);
+  try {
+    const results = await db.select()
+      .from(jobPostsTable)
+      .orderBy(desc(jobPostsTable.created_at))
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Failed to fetch job posts:', error);
+    throw error;
+  }
 }
